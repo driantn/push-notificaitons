@@ -18,7 +18,6 @@ const manifestPlugin = new WebpackPwaManifest({
   short_name: 'MyPWA',
   description: 'My awesome Progressive Web App!',
   background_color: '#ffffff',
-  crossorigin: 'use-credentials',
   icons: [
     {
       src: path.resolve('src/assets/pwa.png'),
