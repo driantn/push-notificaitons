@@ -7,11 +7,19 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  console.log('log', event.data.json());
-  const { title, options } = event.data.json();
-  const promiseChain = self.registration.showNotification(title, options);
+  if (event.data) {
+    console.log('log', event.data.json());
+    const { title, options } = event.data.json();
+    const promiseChain = self.registration.showNotification(title, options);
 
-  event.waitUntil(promiseChain);
+    event.waitUntil(promiseChain);
+  } else {
+    console.log("Push event but no data");
+  }
+});
+
+self.addEventListener('pushsubscriptionchange', (event) => {
+  console.log('log', 'Changed', event);
 });
 
 self.addEventListener('notificationclick', (event) => {

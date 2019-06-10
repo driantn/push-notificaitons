@@ -1,6 +1,5 @@
 
 require('dotenv').config();
-import uuidv4 from 'uuid/v4';
 import webpush from 'web-push';
 import { Router } from 'express';
 import model from '../models/subscription';

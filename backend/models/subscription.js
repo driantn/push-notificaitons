@@ -17,4 +17,10 @@ UserSubscription.getAll = () => UserSubscription.findAll({ raw: true });
 
 UserSubscription.getItem = (itemId) => UserSubscription.findById(itemId);
 
+UserSubscription.delete = (itemId) => UserSubscription.destroy({
+  where: {
+     id: itemId
+  }
+});
+
 export default UserSubscription;

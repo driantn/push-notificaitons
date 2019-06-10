@@ -30,30 +30,32 @@ class PushNotification {
   }
 
   getUserPermission() {
-    return new Promise((resolve, reject) => {
-      if (Notification.permission === 'granted') resolve('granted');
-      Notification.requestPermission().then(result => {
-        if ('granted' === result) return resolve(result);
-        return reject(result);
-      });
-    });
+    return Notification.requestPermission()
   }
 
   registerServiceWorker() {
-    return navigator.serviceWorker.register('sw.js').then(() => {
-      return navigator.serviceWorker.ready.then((registration) => {
-        console.log('log', 'Service worker successfully registered.');
-        return registration;
-      })
-    })
-    .catch((err) => {
+    navigator.serviceWorker.register('sw.js');
+    return navigator.serviceWorker.ready.then((registration) => {
+      console.log('log', 'Service worker successfully registered.');
+      return registration;
+    }).catch((err) => {
       console.error('Unable to register service worker.', err);
     });
   }
 
-  onSubscriptionChange() {
-
-  }
+  // listenForPermissionChange = (registration) => {
+  //   if ('permissions' in navigator) {
+  //     navigator.permissions.query({ name:'notifications' })
+  //       .then((notificationPermission) => {
+  //         notificationPermission.onchange = async () => {
+  //           console.log("User decided to change his seettings. New permission: " + notificationPermission.state);
+  //           if (notificationPermission.state !== 'granted') {
+  //             await this.unSubscribeUser(registration);
+  //           }
+  //         };
+  //       });
+  //   }
+  // }
 
   getUserSubscription(registration) { return registration.pushManager.getSubscription(); }
 
@@ -68,9 +70,10 @@ class PushNotification {
 
   unSubscribeUser(registration) {
     return registration.pushManager.getSubscription().then((subscription) => {
+      console.log('log', subscription);
       return subscription.unsubscribe().then((successful) => {
         console.log('log', 'You\'ve successfully unsubscribed');
-      }).catch(function(e) {
+      }).catch((e) => {
         console.log('log', 'Something happened', e);
       })
     })
@@ -84,8 +87,12 @@ class PushNotification {
     });
   }
 
-  deleteUserSubscription() {
-
+  deleteUserSubscription(subscription) {
+    return axios({
+      method: 'post',
+      url: 'http://localhost:3000/api/unsubscribe',
+      data: subscription,
+    });
   }
 
   async init() {
@@ -95,51 +102,24 @@ class PushNotification {
     const currentSubscription = await this.getUserSubscription(registration);
     if (currentSubscription === null) {
       const permission = await this.getUserPermission(registration);
-      if (permission === 'granted') {
-        console.log('log', 'Permission is ', permission);
-        try {
-          const subscription = await this.subscribeUser(registration);
-          console.log('log', subscription);
-          const response = await this.saveUserSubscription(subscription);
-          console.log('log', response);
-        } catch (error) {
-          console.error(error)
+      console.log('log', 'Permission is ', permission);
+      try {
+        if (permission === 'granted') {
+          try {
+            const subscription = await this.subscribeUser(registration);
+            console.log('log', subscription);
+            const response = await this.saveUserSubscription(subscription);
+            console.log('log', response);
+          } catch (error) {
+            console.error(error)
+          }
         }
-      } else {
-        console.log('log', 'User didn\'t allow push notifications');
+      } catch(error) {
+        console.log('log', 'User didn\'t allow push notifications', error);
       }
     } else {
       console.log('log', 'User already subscribed', currentSubscription);
     }
-
-    // this.registerServiceWorker().then(registration => {
-    //   console.log('log', registration);
-    //   this.getUserSubscription(registration)
-    //     .then(subscription => {
-    //       if (subscription === null) {
-    //         this.getUserPermission()
-    //           .then(result => {
-    //             console.log('log', 'User permission is', result);
-    //             this.subscribeUser(registration)
-    //               .then(pushSub => {
-    //                 console.log('log', 'User subscribed now', JSON.stringify(pushSub));
-    //                 this.saveUserSubscription(pushSub)
-    //                   .then(response => {
-    //                     console.log('log', 'Server response', response);
-    //                   })
-    //               })
-    //               .catch(error => {
-    //                 console.log('log', 'Something happened while subscribing', error);
-    //               })
-    //           })
-    //           .catch(error => {
-    //             console.log('log', 'User didn\'t allow push notifications', error);
-    //           });
-    //       } else {
-    //         console.log('log', 'User already subscribed', subscription);
-    //       }
-    //   });
-    // });
   }
 }
 
