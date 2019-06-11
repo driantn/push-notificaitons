@@ -1,11 +1,12 @@
 import axios from 'axios';
 
 class PushNotification {
-  constructor(key) {
+  publicAppKey: string;
+  constructor(key: string) {
     this.publicAppKey = key;
   }
 
-  static urlBase64ToUint8Array(base64String) {
+  static urlBase64ToUint8Array(base64String: string): Uint8Array {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
       .replace(/\-/g, '+')
@@ -20,7 +21,7 @@ class PushNotification {
     return outputArray;
   }
 
-  isPushNotificationSupported() {
+  isPushNotificationSupported(): Boolean {
     if (
       ('serviceWorker' in window.navigator)
       && ('PushManager' in window)
@@ -29,13 +30,12 @@ class PushNotification {
     return false;
   }
 
-  getUserPermission() {
-    return Notification.requestPermission()
+  getUserPermission(): Promise<string> {
+    return Notification.requestPermission();
   }
 
-  registerServiceWorker() {
-    navigator.serviceWorker.register('sw.js');
-    return navigator.serviceWorker.ready.then((registration) => {
+  registerServiceWorker(): Promise<void | ServiceWorkerRegistration> {
+    return navigator.serviceWorker.register('build/sw.bundle.js').then((registration) => {
       console.log('log', 'Service worker successfully registered.');
       return registration;
     }).catch((err) => {
@@ -57,20 +57,23 @@ class PushNotification {
   //   }
   // }
 
-  getUserSubscription(registration) { return registration.pushManager.getSubscription(); }
+  getUserSubscription(registration: ServiceWorkerRegistration): Promise<PushSubscription | null> {
+    return registration.pushManager.getSubscription();
+  }
 
-  subscribeUser(registration) {
+  subscribeUser(registration: ServiceWorkerRegistration): Promise<PushSubscription | null> {
     const subscribeOptions = {
       userVisibleOnly: true,
-      applicationServerKey: this.constructor.urlBase64ToUint8Array(this.publicAppKey),
+      applicationServerKey: PushNotification.urlBase64ToUint8Array(this.publicAppKey),
     };
 
     return registration.pushManager.subscribe(subscribeOptions);
   }
 
-  unSubscribeUser(registration) {
+  unSubscribeUser(registration: ServiceWorkerRegistration) {
     return registration.pushManager.getSubscription().then((subscription) => {
       console.log('log', subscription);
+      // @ts-ignore
       return subscription.unsubscribe().then((successful) => {
         console.log('log', 'You\'ve successfully unsubscribed');
       }).catch((e) => {
@@ -79,7 +82,7 @@ class PushNotification {
     })
   }
 
-  saveUserSubscription(subscription) {
+  saveUserSubscription(subscription: PushSubscription): Promise<Object> {
     return axios({
       method: 'post',
       url: 'http://localhost:3000/api/subscribe',
@@ -87,7 +90,7 @@ class PushNotification {
     });
   }
 
-  deleteUserSubscription(subscription) {
+  deleteUserSubscription(subscription: PushSubscription): Promise<Object> {
     return axios({
       method: 'post',
       url: 'http://localhost:3000/api/unsubscribe',
@@ -99,16 +102,16 @@ class PushNotification {
     if (!this.isPushNotificationSupported()) throw new Error('Push Notifications not supported');
 
     const registration = await this.registerServiceWorker();
-    const currentSubscription = await this.getUserSubscription(registration);
+    const currentSubscription = await this.getUserSubscription(registration as ServiceWorkerRegistration);
     if (currentSubscription === null) {
-      const permission = await this.getUserPermission(registration);
+      const permission = await this.getUserPermission();
       console.log('log', 'Permission is ', permission);
       try {
         if (permission === 'granted') {
           try {
-            const subscription = await this.subscribeUser(registration);
+            const subscription = await this.subscribeUser(registration as ServiceWorkerRegistration);
             console.log('log', subscription);
-            const response = await this.saveUserSubscription(subscription);
+            const response = await this.saveUserSubscription(subscription as PushSubscription);
             console.log('log', response);
           } catch (error) {
             console.error(error)

@@ -1,16 +1,19 @@
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
+const { clients, skipWaiting, registration } = self as any;
+
+self.addEventListener('install', (event: any) => {
+  skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', (event: any) => {
   event.waitUntil(clients.claim());
 });
 
-self.addEventListener('push', (event) => {
+self.addEventListener('push', (event: any) => {
   if (event.data) {
     console.log('log', event.data.json());
     const { title, options } = event.data.json();
-    const promiseChain = self.registration.showNotification(title, options);
+
+    const promiseChain = registration.showNotification(title, options);
 
     event.waitUntil(promiseChain);
   } else {
@@ -18,11 +21,11 @@ self.addEventListener('push', (event) => {
   }
 });
 
-self.addEventListener('pushsubscriptionchange', (event) => {
+self.addEventListener('pushsubscriptionchange', (event: any) => {
   console.log('log', 'Changed', event);
 });
 
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', (event: any) => {
   console.log('log', event);
   const clickedNotification = event.notification;
   clickedNotification.close();
