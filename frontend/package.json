@@ -9,25 +9,23 @@
   "scripts": {
     "type-check": "tsc --noEmit",
     "type-check:watch": "npm run type-check -- --watch",
+    "start": "npm run build:types && webpack-dev-server",
     "build": "npm run build:types && npm run build:js",
-    "build:js": "webpack --watch",
+    "build:js": "webpack -p",
     "build:types": "tsc --emitDeclarationOnly",
+    "build:prod": "npm run build:types && npm run build:js",
     "serve": "ws -d ."
   },
   "devDependencies": {
-    "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.4.0",
-    "@babel/plugin-proposal-class-properties": "^7.4.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.4.0",
-    "@babel/preset-env": "^7.4.1",
-    "@babel/preset-typescript": "^7.3.3",
     "local-web-server": "^3.0.0",
     "ts-loader": "^6.0.2",
     "typescript": "^3.3.3",
     "webpack": "^4.33.0",
-    "webpack-cli": "^3.3.4"
+    "webpack-cli": "^3.3.4",
+    "webpack-dev-server": "^3.7.1"
   },
   "dependencies": {
-    "axios": "^0.19.0"
+    "axios": "^0.19.0",
+    "bowser": "^2.4.0"
   }
 }

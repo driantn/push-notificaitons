@@ -1,3 +1,4 @@
+
 const { clients, skipWaiting, registration } = self as any;
 
 self.addEventListener('install', (event: any) => {

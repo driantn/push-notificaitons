@@ -1,117 +1,35 @@
-import axios from 'axios';
+
+import PermissionManager from './managers/PermissionManager';
+import SubscriptionManager from './managers/SubscriptionManager';
+import DatabaseManager from './managers/DatabaseManager';
+import BrowserUtils from './managers/BrowserUtils';
+
+const utils = new BrowserUtils();
+const permissionManager = new PermissionManager();
+const subscriptionManager = new SubscriptionManager();
+const databaseManager = new DatabaseManager();
 
 class PushNotification {
   publicAppKey: string;
+
   constructor(key: string) {
     this.publicAppKey = key;
   }
 
-  static urlBase64ToUint8Array(base64String: string): Uint8Array {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-      .replace(/\-/g, '+')
-      .replace(/_/g, '/');
-
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  }
-
-  isPushNotificationSupported(): Boolean {
-    if (
-      ('serviceWorker' in window.navigator)
-      && ('PushManager' in window)
-      && ('Notification' in window)
-    ) return true;
-    return false;
-  }
-
-  getUserPermission(): Promise<string> {
-    return Notification.requestPermission();
-  }
-
-  registerServiceWorker(): Promise<void | ServiceWorkerRegistration> {
-    return navigator.serviceWorker.register('build/sw.bundle.js').then((registration) => {
-      console.log('log', 'Service worker successfully registered.');
-      return registration;
-    }).catch((err) => {
-      console.error('Unable to register service worker.', err);
-    });
-  }
-
-  // listenForPermissionChange = (registration) => {
-  //   if ('permissions' in navigator) {
-  //     navigator.permissions.query({ name:'notifications' })
-  //       .then((notificationPermission) => {
-  //         notificationPermission.onchange = async () => {
-  //           console.log("User decided to change his seettings. New permission: " + notificationPermission.state);
-  //           if (notificationPermission.state !== 'granted') {
-  //             await this.unSubscribeUser(registration);
-  //           }
-  //         };
-  //       });
-  //   }
-  // }
-
-  getUserSubscription(registration: ServiceWorkerRegistration): Promise<PushSubscription | null> {
-    return registration.pushManager.getSubscription();
-  }
-
-  subscribeUser(registration: ServiceWorkerRegistration): Promise<PushSubscription | null> {
-    const subscribeOptions = {
-      userVisibleOnly: true,
-      applicationServerKey: PushNotification.urlBase64ToUint8Array(this.publicAppKey),
-    };
-
-    return registration.pushManager.subscribe(subscribeOptions);
-  }
-
-  unSubscribeUser(registration: ServiceWorkerRegistration) {
-    return registration.pushManager.getSubscription().then((subscription) => {
-      console.log('log', subscription);
-      // @ts-ignore
-      return subscription.unsubscribe().then((successful) => {
-        console.log('log', 'You\'ve successfully unsubscribed');
-      }).catch((e) => {
-        console.log('log', 'Something happened', e);
-      })
-    })
-  }
-
-  saveUserSubscription(subscription: PushSubscription): Promise<Object> {
-    return axios({
-      method: 'post',
-      url: 'http://localhost:3000/api/subscribe',
-      data: subscription,
-    });
-  }
-
-  deleteUserSubscription(subscription: PushSubscription): Promise<Object> {
-    return axios({
-      method: 'post',
-      url: 'http://localhost:3000/api/unsubscribe',
-      data: subscription,
-    });
-  }
-
   async init() {
-    if (!this.isPushNotificationSupported()) throw new Error('Push Notifications not supported');
+    if (!utils.isPushNotificationSupported()) throw new Error('Push Notifications not supported');
 
-    const registration = await this.registerServiceWorker();
-    const currentSubscription = await this.getUserSubscription(registration as ServiceWorkerRegistration);
+    const registration = await utils.registerServiceWorker('./sw-bundle.js');
+    const currentSubscription = await subscriptionManager.getUserSubscription(registration as ServiceWorkerRegistration);
     if (currentSubscription === null) {
-      const permission = await this.getUserPermission();
+      const permission = await permissionManager.getNotificationPermission();
       console.log('log', 'Permission is ', permission);
       try {
         if (permission === 'granted') {
           try {
-            const subscription = await this.subscribeUser(registration as ServiceWorkerRegistration);
+            const subscription = await subscriptionManager.subscribeUser(registration as ServiceWorkerRegistration, this.publicAppKey);
             console.log('log', subscription);
-            const response = await this.saveUserSubscription(subscription as PushSubscription);
+            const response = await databaseManager.saveUserSubscription(subscription as PushSubscription);
             console.log('log', response);
           } catch (error) {
             console.error(error)

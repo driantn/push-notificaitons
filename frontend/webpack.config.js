@@ -9,17 +9,23 @@ module.exports = {
     devtool: 'inline-source-map',
     output: {
         path: path.resolve(__dirname, 'build'),
-        filename: "[name].bundle.js"
+        filename: "[name]-bundle.js"
     },
     resolve: {
-        extensions: ['.ts', '.js'] //resolve all the modules other than index.ts
+        extensions: ['.ts',  '.js'] //resolve all the modules other than index.ts
     },
     module: {
         rules: [
             {
+                test: /\.ts?$/,
                 use: 'ts-loader',
-                test: /\.ts?$/
+                exclude: /(node_modules)/
             }
         ]
     },
+    devServer: {
+        contentBase: path.join(__dirname, './'),
+        compress: false,
+        port: 8080,
+    }
 }
