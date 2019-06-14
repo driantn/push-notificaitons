@@ -20,12 +20,13 @@ webpush.setVapidDetails(
 // Subscribe user
 router.post('/subscribe', async (req, res, next) => {
   const subscription = await model.save(req.body);
-  res.json({ subscription });
+  res.json(subscription);
 });
 
 // Unsubscribe user
 router.post('/unsubscribe', async (req, res, next) => {
   console.log('log', req.body);
+  await model.delete(req.body);
   res.json({ status: 'user unsubscribed' });
 });
 
@@ -35,13 +36,13 @@ router.post('/send', async (req, res, next) => {
   for (let item in allSubscriptions) {
     console.log('log', item);
     const payload = JSON.stringify(req.body);
-    const options = { TTL: 60 };
-    webpush.sendNotification(JSON.parse(allSubscriptions[item].userSubscription), payload, options)
+    const options = { TTL: 60, contentEncoding: 'aes128gcm' };
+    webpush.sendNotification(JSON.parse(allSubscriptions[item].subscription), payload, options)
     .catch((err) => {
       if (err.statusCode === 404 || err.statusCode === 410) {
         console.log('Subscription has expired or is no longer valid: ', err);
       } else {
-        throw err;
+        console.log('log', err);
       }
     });
   }

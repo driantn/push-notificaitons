@@ -14,6 +14,10 @@ export default class BrowserUtils {
     return BrowserUtils.isBrowser() && this.getBrowser() === 'Safari';
   }
 
+  public isEdge(): boolean {
+    return BrowserUtils.isBrowser() && this.getBrowser() === 'Edge';
+  }
+
   public getBrowser(): string {
     if (BrowserUtils.isBrowser()) return browser.getBrowserName();
     return '';

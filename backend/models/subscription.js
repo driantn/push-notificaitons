@@ -6,20 +6,21 @@ const sequelize = new Sequelize('mainDB', null, null, {
 });
 
 const schema = {
-  userSubscription: Sequelize.JSON,
+  subscription: Sequelize.JSON,
+  device: Sequelize.STRING
 };
 
 const UserSubscription = sequelize.define('user-subscription', schema);
 
-UserSubscription.save = (userSubscription) => UserSubscription.create({ userSubscription });
+UserSubscription.save = ({ subscription, device }) => UserSubscription.create({ subscription, device });
 
 UserSubscription.getAll = () => UserSubscription.findAll({ raw: true });
 
 UserSubscription.getItem = (itemId) => UserSubscription.findById(itemId);
 
-UserSubscription.delete = (itemId) => UserSubscription.destroy({
+UserSubscription.delete = (subscription) => UserSubscription.destroy({
   where: {
-     id: itemId
+     subscription: subscription
   }
 });
 

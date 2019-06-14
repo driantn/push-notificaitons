@@ -1,19 +1,23 @@
 
 import PermissionManager from './managers/PermissionManager';
 import SubscriptionManager from './managers/SubscriptionManager';
-import DatabaseManager from './managers/DatabaseManager';
+import UserManager from './managers/UserManager';
 import BrowserUtils from './managers/BrowserUtils';
 
 const utils = new BrowserUtils();
 const permissionManager = new PermissionManager();
 const subscriptionManager = new SubscriptionManager();
-const databaseManager = new DatabaseManager();
+const userManager = new UserManager();
 
 class PushNotification {
   publicAppKey: string;
 
   constructor(key: string) {
     this.publicAppKey = key;
+  }
+
+  async subscribeUser(registration: ServiceWorkerRegistration) {
+
   }
 
   async init() {
@@ -24,22 +28,23 @@ class PushNotification {
     if (currentSubscription === null) {
       const permission = await permissionManager.getNotificationPermission();
       console.log('log', 'Permission is ', permission);
-      try {
-        if (permission === 'granted') {
-          try {
-            const subscription = await subscriptionManager.subscribeUser(registration as ServiceWorkerRegistration, this.publicAppKey);
-            console.log('log', subscription);
-            const response = await databaseManager.saveUserSubscription(subscription as PushSubscription);
-            console.log('log', response);
-          } catch (error) {
-            console.error(error)
-          }
+      if (permission === 'granted') {
+        try {
+          const subscription = await subscriptionManager.subscribeUser(registration as ServiceWorkerRegistration, this.publicAppKey);
+          const response = await userManager.saveUserSubscription(subscription as PushSubscription);
+          console.log('log', 'User saved to database: ', response.data.subscription.endpoint);
+        } catch (error) {
+          console.error(error)
         }
-      } catch(error) {
-        console.log('log', 'User didn\'t allow push notifications', error);
       }
     } else {
       console.log('log', 'User already subscribed', currentSubscription);
+      // renew subscription if we're within 5 days of expiration
+      if (currentSubscription.expirationTime && (Date.now() > currentSubscription.expirationTime - 432000000)) {
+        const newSubscription = subscriptionManager.renewSubscription(registration as ServiceWorkerRegistration, this.publicAppKey);
+        // TODO: delete old user subscription
+        if (!!newSubscription) await userManager.saveUserSubscription((newSubscription as any) as PushSubscription);
+      }
     }
   }
 }
