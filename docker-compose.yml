@@ -1,0 +1,34 @@
+version: "3"
+
+networks:
+  conn_network:
+
+volumes:
+  database: {}
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - database:/var/lib/database
+    networks:
+      - conn_network
+    restart:
+      always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8000"
+    depends_on:
+      - backend
+    networks:
+      - conn_network
+    restart:
+      always

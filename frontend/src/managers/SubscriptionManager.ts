@@ -16,14 +16,13 @@ export default class SubscriptionManager {
     return registration.pushManager.subscribe(subscribeOptions);
   }
 
-  public async unSubscribeUser(registration: ServiceWorkerRegistration): Promise<Boolean> {
-    const subscription = await this.getUserSubscription(registration);
-    console.log('log', subscription);
-    return (subscription as PushSubscription).unsubscribe();
+  public async unSubscribeUser(currentSubscription: PushSubscription, registration: ServiceWorkerRegistration): Promise<Boolean> {
+    console.log('log', currentSubscription);
+    return currentSubscription.unsubscribe();
   }
 
-  public async renewSubscription(registration: ServiceWorkerRegistration, publicKey: string): Promise<PushSubscription | Boolean> {
-    const unsubscribed = await this.unSubscribeUser(registration as ServiceWorkerRegistration);
+  public async renewSubscription(currentSubscription: PushSubscription, registration: ServiceWorkerRegistration, publicKey: string): Promise<PushSubscription | Boolean> {
+    const unsubscribed = await this.unSubscribeUser(currentSubscription, registration as ServiceWorkerRegistration);
     if (unsubscribed) {
       return this.subscribeUser(registration as ServiceWorkerRegistration, publicKey);
     }

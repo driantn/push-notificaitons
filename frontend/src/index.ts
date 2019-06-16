@@ -16,15 +16,15 @@ class PushNotification {
     this.publicAppKey = key;
   }
 
-  async subscribeUser(registration: ServiceWorkerRegistration) {
-
-  }
-
   async init() {
     if (!utils.isPushNotificationSupported()) throw new Error('Push Notifications not supported');
 
     const registration = await utils.registerServiceWorker('./sw-bundle.js');
     const currentSubscription = await subscriptionManager.getUserSubscription(registration as ServiceWorkerRegistration);
+    permissionManager.onNotificationPermissionChange(() => {
+      console.log('log', 'Unsubscribing user');
+      if (currentSubscription) subscriptionManager.unSubscribeUser(currentSubscription, registration as ServiceWorkerRegistration)
+    });
     if (currentSubscription === null) {
       const permission = await permissionManager.getNotificationPermission();
       console.log('log', 'Permission is ', permission);
@@ -41,7 +41,11 @@ class PushNotification {
       console.log('log', 'User already subscribed', currentSubscription);
       // renew subscription if we're within 5 days of expiration
       if (currentSubscription.expirationTime && (Date.now() > currentSubscription.expirationTime - 432000000)) {
-        const newSubscription = subscriptionManager.renewSubscription(registration as ServiceWorkerRegistration, this.publicAppKey);
+        const newSubscription = subscriptionManager.renewSubscription(
+          currentSubscription,
+          registration as ServiceWorkerRegistration,
+          this.publicAppKey
+        );
         // TODO: delete old user subscription
         if (!!newSubscription) await userManager.saveUserSubscription((newSubscription as any) as PushSubscription);
       }

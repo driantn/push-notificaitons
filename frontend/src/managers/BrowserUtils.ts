@@ -6,7 +6,7 @@ export default class BrowserUtils {
     return typeof window !== 'undefined';
   }
 
-  static getRegistration(): Promise<ServiceWorkerRegistration | void> {
+  public getRegistration(): Promise<ServiceWorkerRegistration | void> {
     return navigator.serviceWorker.getRegistration();
   }
 
@@ -49,7 +49,7 @@ export default class BrowserUtils {
   }
 
   public async registerServiceWorker(serviceWorkerUrl: string): Promise<void | ServiceWorkerRegistration> {
-    const registration = await BrowserUtils.getRegistration();
+    const registration = await this.getRegistration();
     if (registration) return registration;
     return navigator.serviceWorker.register(serviceWorkerUrl).then((registration) => {
       console.log('log', 'Service worker successfully registered.');

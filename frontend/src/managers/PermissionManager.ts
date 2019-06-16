@@ -41,19 +41,19 @@ export default class PermissionManager {
       reportedPermission = await PermissionManager.getUserPermission();
     }
     return reportedPermission;
-  }
+  };
 
-  // listenForPermissionChange = (registration) => {
-  //   if ('permissions' in navigator) {
-  //     navigator.permissions.query({ name:'notifications' })
-  //       .then((notificationPermission) => {
-  //         notificationPermission.onchange = async () => {
-  //           console.log("User decided to change his seettings. New permission: " + notificationPermission.state);
-  //           if (notificationPermission.state !== 'granted') {
-  //             await this.unSubscribeUser(registration);
-  //           }
-  //         };
-  //       });
-  //   }
-  // }
+  public onNotificationPermissionChange(callBack: Function): void {
+    if ('permissions' in navigator) {
+      navigator.permissions.query({ name:'notifications' })
+      .then((notificationPermission) => {
+        return notificationPermission.onchange = () => {
+          console.log("User decided to change his seettings. New permission: " + notificationPermission.state);
+          if (notificationPermission.state !== 'granted') {
+            callBack();
+          }
+        };
+      });
+    }
+  }
 }

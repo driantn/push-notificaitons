@@ -6,7 +6,7 @@ import SyncModels from './models';
 import routes from './routes';
 
 const app = express();
-const port = 3000;
+const port = process.env.SERVER_PORT || 3000;
 
 app.use(bodyParser.json());
 

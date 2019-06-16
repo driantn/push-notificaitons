@@ -1,4 +1,8 @@
-var path = require('path');
+const path = require('path');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+
 
 module.exports = {
     entry: {
@@ -23,9 +27,23 @@ module.exports = {
             }
         ]
     },
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: './index.html'
+        }),
+        new CopyWebpackPlugin([
+            { from: './images', to: 'images' },
+        ])
+    ],
+    optimization: {
+        minimizer: [
+            new UglifyJsPlugin(),
+        ],
+    },
     devServer: {
         contentBase: path.join(__dirname, './'),
         compress: false,
+        host: '0.0.0.0',
         port: 8080,
     }
 }
